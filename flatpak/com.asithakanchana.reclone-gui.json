@@ -1,0 +1,66 @@
+{
+  "app-id": "com.asithakanchana.reclone-gui",
+  "runtime": "org.gnome.Platform",
+  "runtime-version": "46",
+  "sdk": "org.gnome.Sdk",
+  "sdk-extensions": [
+    "org.freedesktop.Sdk.Extension.node20",
+    "org.freedesktop.Sdk.Extension.rust-stable"
+  ],
+  "command": "reclone-gui",
+  "finish-args": [
+    "--share=ipc",
+    "--share=network",
+    "--socket=fallback-x11",
+    "--socket=wayland",
+    "--device=dri",
+    "--filesystem=home",
+    "--filesystem=/mnt",
+    "--filesystem=/media",
+    "--talk-name=org.freedesktop.Notifications",
+    "--talk-name=org.kde.StatusNotifierWatcher"
+  ],
+  "build-options": {
+    "append-path": "/usr/lib/sdk/node20/bin:/usr/lib/sdk/rust-stable/bin",
+    "env": {
+      "CARGO_HOME": "/run/build/reclone-gui/cargo",
+      "npm_config_nodedir": "/usr/lib/sdk/node20"
+    }
+  },
+  "modules": [
+    {
+      "name": "rclone",
+      "buildsystem": "simple",
+      "build-commands": [
+        "install -Dm755 rclone /app/bin/rclone"
+      ],
+      "sources": [
+        {
+          "type": "archive",
+          "url": "https://github.com/rclone/rclone/releases/download/v1.68.2/rclone-v1.68.2-linux-amd64.zip",
+          "sha256": "REPLACE_WITH_ACTUAL_SHA256",
+          "strip-components": 1
+        }
+      ]
+    },
+    {
+      "name": "reclone-gui",
+      "buildsystem": "simple",
+      "build-commands": [
+        "npm ci --offline",
+        "npm run build",
+        "cd src-tauri && cargo build --release",
+        "install -Dm755 src-tauri/target/release/reclone-gui /app/bin/reclone-gui",
+        "install -Dm644 flatpak/com.asithakanchana.reclone-gui.desktop /app/share/applications/com.asithakanchana.reclone-gui.desktop",
+        "install -Dm644 src-tauri/icons/128x128.png /app/share/icons/hicolor/128x128/apps/com.asithakanchana.reclone-gui.png",
+        "install -Dm644 flatpak/com.asithakanchana.reclone-gui.metainfo.xml /app/share/metainfo/com.asithakanchana.reclone-gui.metainfo.xml"
+      ],
+      "sources": [
+        {
+          "type": "dir",
+          "path": "."
+        }
+      ]
+    }
+  ]
+}

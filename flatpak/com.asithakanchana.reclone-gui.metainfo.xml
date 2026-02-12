@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.asithakanchana.reclone-gui</id>
+  <name>Reclone GUI</name>
+  <summary>A cross-platform GUI for rclone cloud storage management</summary>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <developer id="com.asithakanchana">
+    <name>Asitha Kanchana Palliyaguru</name>
+  </developer>
+  <description>
+    <p>
+      Reclone GUI is a modern desktop application that provides a graphical
+      interface for rclone, the powerful command-line cloud storage manager.
+      It supports sync, copy, move, and check operations across all rclone-supported
+      cloud providers including Google Drive, Dropbox, S3, and many more.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Browse remote files with a dual-pane file manager</li>
+      <li>Sync, copy, move, and check between any configured remotes</li>
+      <li>Advanced transfer options: bandwidth limits, filters, dry-run mode</li>
+      <li>Multi-transfer support with real-time progress tracking</li>
+      <li>Drag-and-drop file transfers</li>
+      <li>Context menu for quick actions (new folder, delete, copy/move/sync to)</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">com.asithakanchana.reclone-gui.desktop</launchable>
+  <url type="homepage">https://github.com/AsithaKanchana1/reclone_gui</url>
+  <url type="bugtracker">https://github.com/AsithaKanchana1/reclone_gui/issues</url>
+  <url type="vcs-browser">https://github.com/AsithaKanchana1/reclone_gui</url>
+  <content_rating type="oars-1.1" />
+  <releases>
+    <release version="0.2.0" date="2025-07-25">
+      <description>
+        <p>First full-featured release with GUI sync operations.</p>
+        <ul>
+          <li>Full GUI sync/copy/move/check operations</li>
+          <li>Advanced options: bandwidth, filters, dry-run, checksum</li>
+          <li>Multi-transfer progress tracking with cancel support</li>
+          <li>Right-click context menus for file operations</li>
+          <li>Drag-and-drop between remotes</li>
+          <li>Auto-updater support</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
+  <provides>
+    <binary>reclone-gui</binary>
+  </provides>
+  <requires>
+    <display_length compare="ge">768</display_length>
+  </requires>
+  <branding>
+    <color type="primary" scheme_preference="light">#3b82f6</color>
+    <color type="primary" scheme_preference="dark">#1e40af</color>
+  </branding>
+</component>

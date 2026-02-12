@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Reclone GUI
+Comment=A cross-platform GUI for rclone cloud storage management
+Exec=reclone-gui
+Icon=com.asithakanchana.reclone-gui
+Terminal=false
+Type=Application
+Categories=Utility;FileManager;Network;
+Keywords=rclone;cloud;sync;backup;gdrive;s3;dropbox;
+StartupWMClass=reclone-gui
