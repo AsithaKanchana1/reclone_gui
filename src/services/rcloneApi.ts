@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { RemoteEntry, RemoteAbout, SyncOptions } from "@/models/types";
+import type { RemoteEntry, RemoteAbout, SyncOptions, RemoteConfigDump } from "@/models/types";
 
 // ──── Query ─────────────────────────────────────────────────────────
 
@@ -23,6 +23,14 @@ export const mkdir = (remote: string, path: string) =>
 /** Delete a file or directory on a remote. */
 export const deleteItem = (remote: string, path: string, isDir: boolean) =>
   invoke<void>("rclone_delete", { remote, path, isDir });
+
+/** Rename a file or folder on a remote. */
+export const renameItem = (remote: string, oldPath: string, newPath: string) =>
+  invoke<void>("rclone_rename", { remote, oldPath, newPath });
+
+/** Generate a public link for a remote path (if supported). */
+export const linkItem = (remote: string, path: string) =>
+  invoke<string>("rclone_link", { remote, path });
 
 // ──── Transfers (return transfer ID for tracking) ───────────────────
 
@@ -76,3 +84,13 @@ export const startCopy = (source: string, destination: string, flags: string[] =
 /** Cancel a running transfer by ID. */
 export const cancelTransfer = (id: string) =>
   invoke<boolean>("cancel_transfer", { id });
+
+// ──── Config management ───────────────────────────────────────────
+
+export const fetchConfigDump = () => invoke<RemoteConfigDump>("rclone_config_dump");
+
+export const createRemote = (name: string, provider: string, params: Record<string, string>) =>
+  invoke<void>("rclone_config_create", { name, provider, params });
+
+export const updateRemote = (name: string, params: Record<string, string>) =>
+  invoke<void>("rclone_config_update", { name, params });

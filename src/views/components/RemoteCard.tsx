@@ -26,9 +26,10 @@ type Props = {
   remote: Remote;
   onSync: () => void;
   onSelect: (name: string) => void;
+  onEdit: () => void;
 };
 
-export default function RemoteCard({ remote, onSync, onSelect }: Props) {
+export default function RemoteCard({ remote, onSync, onSelect, onEdit }: Props) {
   const bg = palette[remote.service];
   return (
     <div
@@ -43,9 +44,18 @@ export default function RemoteCard({ remote, onSync, onSelect }: Props) {
             <div className="text-lg font-semibold text-white">{remote.name}</div>
           </div>
         </div>
-        <span className="rounded-full bg-white/15 px-2 py-0.5 text-xs font-semibold text-white">
-          {remote.service}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-white/15 px-2 py-0.5 text-xs font-semibold text-white">
+            {remote.service}
+          </span>
+          <button
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            className="rounded bg-white/15 px-2 py-1 text-[11px] text-white/80 hover:bg-white/25"
+            title="Edit remote"
+          >
+            ✎
+          </button>
+        </div>
       </div>
       <div className="mt-4 flex justify-end">
         <button

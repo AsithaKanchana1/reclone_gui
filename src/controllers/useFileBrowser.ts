@@ -20,6 +20,8 @@ export function useFileBrowser(remote: string) {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => { setPath(""); }, [remote]);
+
   const navigate = (entry: RemoteEntry) => {
     if (entry.IsDir) {
       setPath((prev) => (prev ? `${prev}/${entry.Name}` : entry.Name));
@@ -34,5 +36,5 @@ export function useFileBrowser(remote: string) {
     });
   };
 
-  return { path, entries, loading, error, navigate, goUp, refresh: load };
+  return { path, entries, loading, error, navigate, goUp, refresh: load, setPath };
 }

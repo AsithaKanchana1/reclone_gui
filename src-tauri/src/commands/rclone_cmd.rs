@@ -1,6 +1,8 @@
 use crate::models::progress::RemoteAbout;
 use crate::models::remote::RemoteEntry;
 use crate::services::rclone_service;
+use std::collections::HashMap;
+use serde_json::Value;
 use tauri::{AppHandle, Emitter};
 
 // ──── Query commands ────────────────────────────────────────────────
@@ -30,6 +32,33 @@ pub fn rclone_mkdir(remote: String, path: String) -> Result<(), String> {
 #[tauri::command]
 pub fn rclone_delete(remote: String, path: String, is_dir: bool) -> Result<(), String> {
     rclone_service::delete(&remote, &path, is_dir)
+}
+
+#[tauri::command]
+pub fn rclone_rename(remote: String, old_path: String, new_path: String) -> Result<(), String> {
+    rclone_service::rename(&remote, &old_path, &new_path)
+}
+
+#[tauri::command]
+pub fn rclone_link(remote: String, path: String) -> Result<String, String> {
+    rclone_service::link(&remote, &path)
+}
+
+// ──── Config management ───────────────────────────────────────────
+
+#[tauri::command]
+pub fn rclone_config_dump() -> Result<Value, String> {
+    rclone_service::config_dump()
+}
+
+#[tauri::command]
+pub fn rclone_config_create(name: String, provider: String, params: HashMap<String, String>) -> Result<(), String> {
+    rclone_service::config_create(&name, &provider, &params)
+}
+
+#[tauri::command]
+pub fn rclone_config_update(name: String, params: HashMap<String, String>) -> Result<(), String> {
+    rclone_service::config_update(&name, &params)
 }
 
 // ──── Transfer commands ─────────────────────────────────────────────

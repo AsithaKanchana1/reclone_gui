@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { RemoteEntry } from "@/models/types";
 
-export type ContextAction = "copy" | "move" | "sync" | "delete" | "mkdir" | "refresh";
+export type ContextAction = "copy" | "move" | "sync" | "delete" | "mkdir" | "refresh" | "rename" | "link";
 
 type Props = {
   x: number;
@@ -35,6 +35,8 @@ export default function FileContextMenu({ x, y, entry, onAction, onClose }: Prop
         { action: "copy", label: "Copy to…", icon: "📋" },
         { action: "move", label: "Move to…", icon: "📦" },
         { action: "sync", label: "Sync to…", icon: "🔄" },
+        { action: "rename", label: "Rename", icon: "✏️" },
+        { action: "link", label: "Public link", icon: "🔗" },
         { action: "delete", label: "Delete", icon: "🗑️", danger: true },
       ]
     : [

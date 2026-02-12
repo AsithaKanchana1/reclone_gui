@@ -71,7 +71,7 @@ export const DEFAULT_SYNC_OPTIONS: SyncOptions = {
   filterExclude: "",
   noTraverse: false,
   sizeOnly: false,
-  checksum: false,
+  checksum: true,
 };
 
 // ──── Disk usage ────────────────────────────────────────────────────
@@ -100,3 +100,7 @@ export interface DropTarget {
 // ──── UI navigation ─────────────────────────────────────────────────
 
 export type AppView = "dashboard" | "about";
+
+// ──── Config dump ──────────────────────────────────────────────────
+
+export type RemoteConfigDump = Record<string, Record<string, string>>;

@@ -1,7 +1,7 @@
 import { useRef, useState, useLayoutEffect, useCallback } from "react";
 import { useFileBrowser } from "@/controllers/useFileBrowser";
 import { useRemoteDnD } from "@/controllers/useRemoteDnD";
-import { deleteItem, mkdir } from "@/services/rcloneApi";
+import { deleteItem, mkdir, renameItem, linkItem } from "@/services/rcloneApi";
 import VirtualFileList from "./VirtualFileList";
 import FileContextMenu, { type ContextAction } from "./FileContextMenu";
 import type { RemoteEntry } from "@/models/types";
@@ -13,7 +13,7 @@ type Props = {
 };
 
 export default function FileBrowser({ remote, label, onTransfer }: Props) {
-  const { path, entries, loading, error, navigate, goUp, refresh } = useFileBrowser(remote);
+  const { path, entries, loading, error, navigate, goUp, refresh, setPath } = useFileBrowser(remote);
   const { getDragProps, getDropProps, pendingLookup } = useRemoteDnD();
   const containerRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(400);
@@ -70,11 +70,44 @@ export default function FileBrowser({ remote, label, onTransfer }: Props) {
           onTransfer(entryPath);
         }
         break;
+      case "rename": {
+        if (!entry) break;
+        const newName = prompt("Rename to:", entry.Name);
+        if (newName && newName !== entry.Name) {
+          try {
+            const oldPath = path ? `${path}/${entry.Name}` : entry.Name;
+            const newPath = path ? `${path}/${newName}` : newName;
+            await renameItem(remote, oldPath, newPath);
+            refresh();
+          } catch (e) {
+            alert(`Rename failed: ${e}`);
+          }
+        }
+        break;
+      }
+      case "link": {
+        if (!entry) break;
+        try {
+          const entryPath = path ? `${path}/${entry.Name}` : entry.Name;
+          const url = await linkItem(remote, entryPath);
+          if (navigator?.clipboard) {
+            await navigator.clipboard.writeText(url);
+            alert(`Link copied to clipboard:\n${url}`);
+          } else {
+            alert(`Public link:\n${url}`);
+          }
+        } catch (e) {
+          alert(`Link failed (remote may not support it): ${e}`);
+        }
+        break;
+      }
       case "refresh":
         refresh();
         break;
     }
   }, [ctxMenu, path, remote, refresh, onTransfer]);
+
+  const breadcrumbs = [remote, ...path.split("/").filter(Boolean)];
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-900/60">
@@ -108,8 +141,23 @@ export default function FileBrowser({ remote, label, onTransfer }: Props) {
       </div>
 
       {/* Breadcrumb */}
-      <div className="border-b border-white/5 px-4 py-1.5 text-xs text-white/40 font-mono truncate">
-        {remote}:{path || "/"}
+      <div className="border-b border-white/5 px-4 py-1.5 text-xs text-white/60 font-mono truncate flex items-center gap-1">
+        {breadcrumbs.map((crumb, idx) => {
+          const crumbPath = idx === 0 ? "" : breadcrumbs.slice(1, idx + 1).join("/");
+          const isLast = idx === breadcrumbs.length - 1;
+          return (
+            <span key={crumbPath || "root"} className="flex items-center gap-1">
+              {idx > 0 && <span className="text-white/30">/</span>}
+              <button
+                className={`truncate max-w-[140px] text-left ${isLast ? "text-white" : "text-white/70 hover:text-white"}`}
+                onClick={() => setPath(crumbPath)}
+                disabled={isLast}
+              >
+                {idx === 0 ? `${crumb}:` : crumb || "/"}
+              </button>
+            </span>
+          );
+        })}
       </div>
 
       {/* File list */}

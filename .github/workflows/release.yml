@@ -89,6 +89,14 @@ jobs:
           releaseBody: |
             ## Reclone GUI ${{ github.ref_name }}
 
+            ### What's New
+            - In-app Connection Wizard (add/edit remotes without terminal)
+            - File browser: rename, public links, clickable breadcrumbs
+            - Safer sync modes: Keep Both / Make Identical / Move
+            - Checksum verification on by default
+            - Simulation mode (dry-run) toggle
+            - Full user guide (docs/USER_GUIDE.md)
+
             ### Downloads
             | Platform | Format |
             |----------|--------|
@@ -97,8 +105,8 @@ jobs:
             | macOS x86_64 | .dmg |
             | macOS ARM64 | .dmg |
 
-            > **Flatpak**: Install from [Flathub](https://flathub.org/apps/com.asithakanchana.reclone-gui) (pending review).
+            > **Flatpak**: Submission pending at [Flathub](https://github.com/flathub/flathub).
 
-            See the [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+            **Requires**: rclone installed and configured.
           releaseDraft: false
           prerelease: false

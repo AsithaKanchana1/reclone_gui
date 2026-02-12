@@ -4,11 +4,18 @@ import { useRemotes } from "@/controllers/useRemotes";
 import AppLayout from "@/views/layouts/AppLayout";
 import DashboardPage from "@/views/pages/DashboardPage";
 import AboutDialog from "@/views/components/AboutDialog";
+import RemoteWizard from "@/views/components/RemoteWizard";
 
 export default function App() {
   const { remotes, loading, error, refresh } = useRemotes();
   const [currentView, setCurrentView] = useState<AppView>("dashboard");
   const [selectedRemote, setSelectedRemote] = useState("");
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardMode, setWizardMode] = useState<"create" | "edit">("create");
+  const [editRemoteName, setEditRemoteName] = useState<string | undefined>(undefined);
+
+  const openCreate = () => { setWizardMode("create"); setEditRemoteName(undefined); setWizardOpen(true); };
+  const openEdit = (name: string) => { setWizardMode("edit"); setEditRemoteName(name); setWizardOpen(true); };
 
   if (loading) {
     return (
@@ -40,15 +47,26 @@ export default function App() {
       currentView={currentView}
       onChangeView={setCurrentView}
       onRefresh={refresh}
+      onOpenWizard={openCreate}
     >
       {currentView === "dashboard" && (
         <DashboardPage
           remotes={remotes}
           selectedRemote={selectedRemote}
           onSelectRemote={setSelectedRemote}
+          onEditRemote={openEdit}
         />
       )}
       {currentView === "about" && <AboutDialog />}
+
+      {wizardOpen && (
+        <RemoteWizard
+          mode={wizardMode}
+          remoteName={editRemoteName}
+          onClose={() => setWizardOpen(false)}
+          onSaved={() => { refresh(); setWizardOpen(false); }}
+        />
+      )}
     </AppLayout>
   );
 }

@@ -131,6 +131,95 @@ pub fn delete(remote: &str, path: &str, is_dir: bool) -> Result<(), String> {
     Ok(())
 }
 
+/// Run `rclone moveto remote:old remote:new` to rename an entry.
+pub fn rename(remote: &str, old_path: &str, new_path: &str) -> Result<(), String> {
+    let old_full = format!("{}:{}", remote, old_path);
+    let new_full = format!("{}:{}", remote, new_path);
+    let output = Command::new("rclone")
+        .args(["moveto", &old_full, &new_full])
+        .output()
+        .map_err(|e| format!("Failed to run rclone moveto: {}", e))?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+    Ok(())
+}
+
+/// Run `rclone link remote:path` to get a public URL (if the backend supports linking).
+pub fn link(remote: &str, path: &str) -> Result<String, String> {
+    let full = format!("{}:{}", remote, path);
+    let output = Command::new("rclone")
+        .args(["link", &full])
+        .output()
+        .map_err(|e| format!("Failed to run rclone link: {}", e))?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+
+    Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+}
+
+// ──── Config management ────────────────────────────────────────────
+
+/// Dump the current rclone config as JSON.
+pub fn config_dump() -> Result<serde_json::Value, String> {
+    let output = Command::new("rclone")
+        .args(["config", "dump", "--json"])
+        .output()
+        .map_err(|e| format!("Failed to run rclone config dump: {}", e))?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+
+    serde_json::from_slice(&output.stdout)
+        .map_err(|e| format!("Failed to parse rclone config dump: {}", e))
+}
+
+/// Create a new remote via `rclone config create name provider key value...`.
+pub fn config_create(name: &str, provider: &str, params: &HashMap<String, String>) -> Result<(), String> {
+    let mut args = vec!["config", "create", name, provider];
+    for (k, v) in params {
+        args.push(k);
+        args.push(v);
+    }
+
+    let output = Command::new("rclone")
+        .args(&args)
+        .output()
+        .map_err(|e| format!("Failed to run rclone config create: {}", e))?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+    Ok(())
+}
+
+/// Update an existing remote via `rclone config update name key value...`.
+pub fn config_update(name: &str, params: &HashMap<String, String>) -> Result<(), String> {
+    if params.is_empty() {
+        return Ok(());
+    }
+
+    let mut args = vec!["config", "update", name];
+    for (k, v) in params {
+        args.push(k);
+        args.push(v);
+    }
+
+    let output = Command::new("rclone")
+        .args(&args)
+        .output()
+        .map_err(|e| format!("Failed to run rclone config update: {}", e))?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+    Ok(())
+}
+
 // ──── Streaming transfers ──────────────────────────────────────────
 
 /// Spawn an rclone transfer process (`sync`, `copy`, `move`, `check`).

@@ -7,6 +7,7 @@ type Props = {
   currentView: AppView;
   onChangeView: (view: AppView) => void;
   onRefresh: () => void;
+  onOpenWizard: () => void;
 };
 
 export default function Sidebar({
@@ -16,6 +17,7 @@ export default function Sidebar({
   currentView,
   onChangeView,
   onRefresh,
+  onOpenWizard,
 }: Props) {
   return (
     <aside className="flex w-56 flex-col border-r border-white/10 bg-slate-900">
@@ -57,6 +59,12 @@ export default function Sidebar({
               🔃
             </button>
           </div>
+          <button
+            onClick={onOpenWizard}
+            className="mt-2 w-full rounded bg-brand-600/70 px-3 py-2 text-xs font-semibold text-white transition hover:bg-brand-500"
+          >
+            ＋ Add / Edit
+          </button>
           <ul className="mt-2 space-y-0.5">
             {remotes.map((r) => (
               <li key={r.name}>

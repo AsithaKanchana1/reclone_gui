@@ -9,6 +9,7 @@ type Props = {
   currentView: AppView;
   onChangeView: (view: AppView) => void;
   onRefresh: () => void;
+  onOpenWizard: () => void;
   children: ReactNode;
 };
 
@@ -19,6 +20,7 @@ export default function AppLayout({
   currentView,
   onChangeView,
   onRefresh,
+  onOpenWizard,
   children,
 }: Props) {
   return (
@@ -30,6 +32,7 @@ export default function AppLayout({
         currentView={currentView}
         onChangeView={onChangeView}
         onRefresh={onRefresh}
+        onOpenWizard={onOpenWizard}
       />
       <main className="flex flex-1 flex-col overflow-hidden">{children}</main>
     </div>

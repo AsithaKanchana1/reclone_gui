@@ -6,10 +6,10 @@ import { fetchFiles, startTransfer } from "@/services/rcloneApi";
 // ──── Helpers ───────────────────────────────────────────────────────
 
 const OP_LABELS: Record<TransferOp, { label: string; desc: string; icon: string }> = {
-  sync: { label: "Sync", desc: "Make destination identical to source", icon: "🔄" },
-  copy: { label: "Copy", desc: "Copy files from source to destination", icon: "📋" },
-  move: { label: "Move", desc: "Move files from source to destination", icon: "📦" },
-  check: { label: "Check", desc: "Check if files match between remotes", icon: "✅" },
+  copy: { label: "Keep both", desc: "Copy only — never delete at destination", icon: "📥" },
+  sync: { label: "Make identical", desc: "Sync & delete extras at destination", icon: "🔄" },
+  move: { label: "Move", desc: "Copy then delete from source", icon: "📦" },
+  check: { label: "Check", desc: "Validate contents match", icon: "✅" },
 };
 
 type Props = {
@@ -108,6 +108,7 @@ function MiniPicker({
 export default function SyncDialog({ remotes, initialSource, initialSourcePath, initialDest, onClose, onStarted }: Props) {
   const [opts, setOpts] = useState<SyncOptions>({
     ...DEFAULT_SYNC_OPTIONS,
+    op: "copy",
     sourceRemote: initialSource || "",
     sourcePath: initialSourcePath || "",
     destRemote: initialDest || "",
@@ -165,6 +166,11 @@ export default function SyncDialog({ remotes, initialSource, initialSourcePath, 
                 </button>
               ))}
             </div>
+            {opts.op === "sync" && (
+              <div className="mt-2 rounded border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                Warning: "Make identical" deletes files on the destination that are not present in the source.
+              </div>
+            )}
           </div>
 
           {/* Source & Destination pickers side by side */}
@@ -190,10 +196,19 @@ export default function SyncDialog({ remotes, initialSource, initialSourcePath, 
           {/* Options panel */}
           <details className="group rounded-xl border border-white/10 bg-white/[0.02]">
             <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-white/70 hover:text-white">
-              ⚙️ Advanced Options
+              ⚙️ Safety & performance
               <span className="ml-2 text-xs text-white/30 group-open:hidden">(click to expand)</span>
             </summary>
             <div className="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-white/10 px-4 py-4">
+              <div className="col-span-2 flex flex-wrap gap-4">
+                <Toggle label="Simulation mode (dry run)" checked={opts.dryRun} onChange={(v) => set("dryRun", v)} />
+                <Toggle label="Use checksums" checked={opts.checksum} onChange={(v) => set("checksum", v)} />
+                <Toggle label="Verbose logs" checked={opts.verbose} onChange={(v) => set("verbose", v)} />
+                <Toggle label="Delete excluded" checked={opts.deleteExcluded} onChange={(v) => set("deleteExcluded", v)} />
+                <Toggle label="No traverse" checked={opts.noTraverse} onChange={(v) => set("noTraverse", v)} />
+                <Toggle label="Size only" checked={opts.sizeOnly} onChange={(v) => set("sizeOnly", v)} />
+              </div>
+
               {/* Bandwidth limit */}
               <div>
                 <label className="text-xs text-white/50">Bandwidth limit</label>
@@ -253,15 +268,6 @@ export default function SyncDialog({ remotes, initialSource, initialSourcePath, 
                 />
               </div>
 
-              {/* Toggles */}
-              <div className="col-span-2 flex flex-wrap gap-4">
-                <Toggle label="Dry run" checked={opts.dryRun} onChange={(v) => set("dryRun", v)} />
-                <Toggle label="Verbose" checked={opts.verbose} onChange={(v) => set("verbose", v)} />
-                <Toggle label="Delete excluded" checked={opts.deleteExcluded} onChange={(v) => set("deleteExcluded", v)} />
-                <Toggle label="No traverse" checked={opts.noTraverse} onChange={(v) => set("noTraverse", v)} />
-                <Toggle label="Size only" checked={opts.sizeOnly} onChange={(v) => set("sizeOnly", v)} />
-                <Toggle label="Checksum" checked={opts.checksum} onChange={(v) => set("checksum", v)} />
-              </div>
             </div>
           </details>
 

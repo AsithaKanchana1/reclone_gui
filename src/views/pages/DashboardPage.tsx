@@ -10,9 +10,10 @@ type Props = {
   remotes: Remote[];
   selectedRemote: string;
   onSelectRemote: (name: string) => void;
+  onEditRemote: (name: string) => void;
 };
 
-export default function DashboardPage({ remotes, selectedRemote, onSelectRemote }: Props) {
+export default function DashboardPage({ remotes, selectedRemote, onSelectRemote, onEditRemote }: Props) {
   const { transfers, cancel, dismiss } = useTransfers();
   const [destRemote, setDestRemote] = useState("");
 
@@ -53,6 +54,7 @@ export default function DashboardPage({ remotes, selectedRemote, onSelectRemote 
               remote={r}
               onSync={() => openSyncDialog(r.name)}
               onSelect={onSelectRemote}
+              onEdit={() => onEditRemote(r.name)}
             />
           ))}
           {!remotes.length && (
