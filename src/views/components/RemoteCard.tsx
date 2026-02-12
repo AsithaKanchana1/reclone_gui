@@ -24,7 +24,7 @@ const icons: Record<ServiceType, string> = {
 
 type Props = {
   remote: Remote;
-  onSync: (name: string) => void;
+  onSync: () => void;
   onSelect: (name: string) => void;
 };
 
@@ -50,9 +50,9 @@ export default function RemoteCard({ remote, onSync, onSelect }: Props) {
       <div className="mt-4 flex justify-end">
         <button
           className="rounded-lg bg-white/90 px-3 py-1.5 text-sm font-semibold text-slate-900 transition hover:bg-white"
-          onClick={(e) => { e.stopPropagation(); onSync(remote.name); }}
+          onClick={(e) => { e.stopPropagation(); onSync(); }}
         >
-          Sync
+          🔄 Transfer
         </button>
       </div>
     </div>

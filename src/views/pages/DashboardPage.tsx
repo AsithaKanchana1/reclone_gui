@@ -1,10 +1,10 @@
 import { useState } from "react";
 import type { Remote } from "@/models/types";
-import { startSync } from "@/services/rcloneApi";
 import { useTransfers } from "@/controllers/useTransfers";
 import RemoteCard from "@/views/components/RemoteCard";
 import FileBrowser from "@/views/components/FileBrowser";
 import TransferOverlay from "@/views/components/TransferOverlay";
+import SyncDialog from "@/views/components/SyncDialog";
 
 type Props = {
   remotes: Remote[];
@@ -13,18 +13,20 @@ type Props = {
 };
 
 export default function DashboardPage({ remotes, selectedRemote, onSelectRemote }: Props) {
-  const { transfer, dismiss } = useTransfers();
-  const [destination, setDestination] = useState("");
+  const { transfers, cancel, dismiss } = useTransfers();
   const [destRemote, setDestRemote] = useState("");
-  const [error, setError] = useState<string | null>(null);
 
-  const handleSync = (remoteName: string) => {
-    if (!destination) {
-      setError("Set a destination path first.");
-      return;
-    }
-    setError(null);
-    startSync(`${remoteName}:`, destination).catch((e) => setError(String(e)));
+  // Sync dialog state
+  const [syncDialogOpen, setSyncDialogOpen] = useState(false);
+  const [syncSource, setSyncSource] = useState("");
+  const [syncSourcePath, setSyncSourcePath] = useState("");
+  const [syncDest, setSyncDest] = useState("");
+
+  const openSyncDialog = (sourceRemote?: string, sourcePath?: string, destRemoteName?: string) => {
+    setSyncSource(sourceRemote || selectedRemote);
+    setSyncSourcePath(sourcePath || "");
+    setSyncDest(destRemoteName || destRemote || "");
+    setSyncDialogOpen(true);
   };
 
   return (
@@ -33,23 +35,25 @@ export default function DashboardPage({ remotes, selectedRemote, onSelectRemote 
       <header className="flex items-center justify-between border-b border-white/10 px-6 py-3">
         <div>
           <h1 className="text-xl font-semibold text-white">Dashboard</h1>
-          {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
         </div>
-        <div className="flex items-center gap-2">
-          <input
-            className="w-72 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white placeholder:text-white/40"
-            value={destination}
-            onChange={(e) => setDestination(e.target.value)}
-            placeholder="Sync destination (e.g. local:/home/user/backup)"
-          />
-        </div>
+        <button
+          onClick={() => openSyncDialog()}
+          className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-500"
+        >
+          <span>🔄</span> New Transfer
+        </button>
       </header>
 
       {/* Remote cards */}
       <section className="border-b border-white/10 p-4">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {remotes.map((r) => (
-            <RemoteCard key={r.name} remote={r} onSync={handleSync} onSelect={onSelectRemote} />
+            <RemoteCard
+              key={r.name}
+              remote={r}
+              onSync={() => openSyncDialog(r.name)}
+              onSelect={onSelectRemote}
+            />
           ))}
           {!remotes.length && (
             <p className="col-span-full text-center text-sm text-white/40 py-8">
@@ -62,14 +66,22 @@ export default function DashboardPage({ remotes, selectedRemote, onSelectRemote 
       {/* Dual file browsers */}
       <section className="flex flex-1 gap-2 overflow-hidden p-4">
         {selectedRemote ? (
-          <FileBrowser remote={selectedRemote} label={`Source: ${selectedRemote}`} />
+          <FileBrowser
+            remote={selectedRemote}
+            label={`Source: ${selectedRemote}`}
+            onTransfer={(path) => openSyncDialog(selectedRemote, path)}
+          />
         ) : (
           <div className="flex flex-1 items-center justify-center text-sm text-white/30">
             Select a remote from the sidebar
           </div>
         )}
         {destRemote ? (
-          <FileBrowser remote={destRemote} label={`Dest: ${destRemote}`} />
+          <FileBrowser
+            remote={destRemote}
+            label={`Dest: ${destRemote}`}
+            onTransfer={(path) => openSyncDialog(destRemote, path)}
+          />
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/10 text-sm text-white/30">
             <p>Pick a destination remote</p>
@@ -91,7 +103,19 @@ export default function DashboardPage({ remotes, selectedRemote, onSelectRemote 
       </section>
 
       {/* Bottom transfer bar */}
-      <TransferOverlay transfer={transfer} onCancel={dismiss} />
+      <TransferOverlay transfers={transfers} onCancel={cancel} onDismiss={dismiss} />
+
+      {/* Sync Dialog */}
+      {syncDialogOpen && (
+        <SyncDialog
+          remotes={remotes}
+          initialSource={syncSource}
+          initialSourcePath={syncSourcePath}
+          initialDest={syncDest}
+          onClose={() => setSyncDialogOpen(false)}
+          onStarted={() => {}}
+        />
+      )}
     </div>
   );
 }

@@ -1,7 +1,46 @@
-use crate::models::progress::RcloneProgress;
+use crate::models::progress::{RcloneProgress, RemoteAbout, TransferStatus};
 use crate::models::remote::RemoteEntry;
+use std::collections::HashMap;
 use std::io::{BufRead, BufReader};
 use std::process::{Child, Command, Stdio};
+use std::sync::Mutex;
+
+// ──── Active process registry (for cancellation) ──────────────────
+
+lazy_static::lazy_static! {
+    static ref ACTIVE_PROCESSES: Mutex<HashMap<String, u32>> = Mutex::new(HashMap::new());
+}
+
+pub fn register_process(id: &str, pid: u32) {
+    ACTIVE_PROCESSES.lock().unwrap().insert(id.to_string(), pid);
+}
+
+pub fn unregister_process(id: &str) {
+    ACTIVE_PROCESSES.lock().unwrap().remove(id);
+}
+
+/// Kill a running rclone process by transfer id. Returns true if found and killed.
+pub fn cancel_transfer(id: &str) -> Result<bool, String> {
+    let pid = ACTIVE_PROCESSES.lock().unwrap().get(id).copied();
+    if let Some(pid) = pid {
+        #[cfg(unix)]
+        {
+            unsafe { libc::kill(pid as i32, libc::SIGTERM); }
+        }
+        #[cfg(windows)]
+        {
+            let _ = Command::new("taskkill")
+                .args(["/PID", &pid.to_string(), "/F"])
+                .output();
+        }
+        unregister_process(id);
+        Ok(true)
+    } else {
+        Ok(false)
+    }
+}
+
+// ──── Query helpers ─────────────────────────────────────────────────
 
 /// Run `rclone listremotes` and return a list of remote names (without trailing `:` ).
 pub fn list_remotes() -> Result<Vec<String>, String> {
@@ -46,7 +85,55 @@ pub fn list_files(remote: &str, path: &str) -> Result<Vec<RemoteEntry>, String> 
     Ok(entries)
 }
 
-/// Spawn an rclone transfer process (`sync` or `copy`).
+/// Run `rclone about remote:` to get disk usage.
+pub fn about(remote: &str) -> Result<RemoteAbout, String> {
+    let output = Command::new("rclone")
+        .args(["about", &format!("{}:", remote), "--json"])
+        .output()
+        .map_err(|e| format!("Failed to run rclone about: {}", e))?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+
+    serde_json::from_slice(&output.stdout)
+        .map_err(|e| format!("Failed to parse rclone about output: {}", e))
+}
+
+// ──── Single-shot commands (no progress stream) ─────────────────────
+
+/// Run `rclone mkdir remote:path`.
+pub fn mkdir(remote: &str, path: &str) -> Result<(), String> {
+    let remote_path = format!("{}:{}", remote, path);
+    let output = Command::new("rclone")
+        .args(["mkdir", &remote_path])
+        .output()
+        .map_err(|e| format!("Failed to run rclone mkdir: {}", e))?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+    Ok(())
+}
+
+/// Run `rclone deletefile remote:path` or `rclone purge remote:path` for directories.
+pub fn delete(remote: &str, path: &str, is_dir: bool) -> Result<(), String> {
+    let remote_path = format!("{}:{}", remote, path);
+    let cmd = if is_dir { "purge" } else { "deletefile" };
+    let output = Command::new("rclone")
+        .args([cmd, &remote_path])
+        .output()
+        .map_err(|e| format!("Failed to run rclone {}: {}", cmd, e))?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+    Ok(())
+}
+
+// ──── Streaming transfers ──────────────────────────────────────────
+
+/// Spawn an rclone transfer process (`sync`, `copy`, `move`, `check`).
 pub fn spawn_transfer(op: &str, source: &str, dest: &str, flags: &[String]) -> Result<Child, String> {
     let mut args: Vec<String> = vec![
         op.to_string(),
@@ -71,25 +158,55 @@ pub fn spawn_transfer(op: &str, source: &str, dest: &str, flags: &[String]) -> R
 }
 
 /// Parse rclone JSON log lines from stderr, calling `on_progress` for each parsed tick.
-pub fn stream_progress<F>(child: &mut Child, op: &str, source: &str, dest: &str, mut on_progress: F) -> Result<(), String>
+pub fn stream_progress<F>(
+    child: &mut Child,
+    transfer_id: &str,
+    op: &str,
+    source: &str,
+    dest: &str,
+    mut on_progress: F,
+) -> Result<(), String>
 where
     F: FnMut(RcloneProgress),
 {
-    // rclone --use-json-log writes structured JSON to stderr
+    // Register for cancellation
+    register_process(transfer_id, child.id());
+
     let stderr = child.stderr.take().ok_or("Missing rclone stderr")?;
     let reader = BufReader::new(stderr);
 
     for line in reader.lines() {
         let line = line.map_err(|e| format!("Failed to read rclone output: {}", e))?;
         if let Ok(json) = serde_json::from_str::<serde_json::Value>(&line) {
-            if let Some(progress) = parse_progress(&json, op, source, dest) {
+            if let Some(progress) = parse_progress(&json, transfer_id, op, source, dest) {
                 on_progress(progress);
             }
         }
     }
 
+    unregister_process(transfer_id);
+
     let status = child.wait().map_err(|e| format!("Failed to wait for rclone: {}", e))?;
-    if !status.success() {
+
+    // Emit final status
+    let final_status = if status.success() {
+        TransferStatus::Complete
+    } else {
+        TransferStatus::Error
+    };
+
+    on_progress(RcloneProgress {
+        id: transfer_id.to_string(),
+        op: op.to_string(),
+        source: source.to_string(),
+        destination: dest.to_string(),
+        percentage: if final_status == TransferStatus::Complete { 100.0 } else { 0.0 },
+        speed: String::new(),
+        eta: String::new(),
+        status: final_status.clone(),
+    });
+
+    if final_status == TransferStatus::Error {
         return Err(format!("rclone {} exited with non-zero status", op));
     }
 
@@ -98,11 +215,11 @@ where
 
 fn parse_progress(
     json: &serde_json::Value,
+    transfer_id: &str,
     op: &str,
     source: &str,
     dest: &str,
 ) -> Option<RcloneProgress> {
-    // rclone stats JSON has a "stats" key with bytes, speed, eta, etc.
     let stats = json.get("stats")?;
 
     let bytes_total = stats.get("totalBytes").and_then(|v| v.as_f64()).unwrap_or(0.0);
@@ -129,12 +246,14 @@ fn parse_progress(
         });
 
     Some(RcloneProgress {
+        id: transfer_id.to_string(),
         op: op.to_string(),
         source: source.to_string(),
         destination: dest.to_string(),
         percentage,
         speed,
         eta,
+        status: TransferStatus::Running,
     })
 }
 

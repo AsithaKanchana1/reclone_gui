@@ -18,15 +18,69 @@ export interface RemoteEntry {
   IsDir: boolean;
 }
 
-// ──── Transfer progress (matches Rust RcloneProgress) ───────────────
+// ──── Transfer ──────────────────────────────────────────────────────
+
+export type TransferOp = "sync" | "copy" | "move" | "check";
+export type TransferStatus = "running" | "complete" | "error" | "cancelled";
 
 export interface TransferProgress {
+  id: string;
   op: string;
   source: string;
   destination: string;
   percentage: number;
   speed: string;
   eta: string;
+  status: TransferStatus;
+}
+
+// ──── Sync options (GUI‑selectable rclone flags) ────────────────────
+
+export interface SyncOptions {
+  op: TransferOp;
+  sourceRemote: string;
+  sourcePath: string;
+  destRemote: string;
+  destPath: string;
+  dryRun: boolean;
+  bandwidth: string;          // e.g. "10M", "" for unlimited
+  transfers: number;          // parallel file transfers (default 4)
+  checkers: number;           // parallel checkers (default 8)
+  deleteExcluded: boolean;
+  verbose: boolean;
+  filterInclude: string;      // --include pattern
+  filterExclude: string;      // --exclude pattern
+  noTraverse: boolean;
+  sizeOnly: boolean;
+  checksum: boolean;
+}
+
+export const DEFAULT_SYNC_OPTIONS: SyncOptions = {
+  op: "sync",
+  sourceRemote: "",
+  sourcePath: "",
+  destRemote: "",
+  destPath: "",
+  dryRun: false,
+  bandwidth: "",
+  transfers: 4,
+  checkers: 8,
+  deleteExcluded: false,
+  verbose: false,
+  filterInclude: "",
+  filterExclude: "",
+  noTraverse: false,
+  sizeOnly: false,
+  checksum: false,
+};
+
+// ──── Disk usage ────────────────────────────────────────────────────
+
+export interface RemoteAbout {
+  total: number | null;
+  used: number | null;
+  free: number | null;
+  trashed: number | null;
 }
 
 // ──── DnD ───────────────────────────────────────────────────────────

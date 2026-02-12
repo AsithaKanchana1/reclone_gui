@@ -10,6 +10,7 @@ type Props = {
   getDragProps?: (file: DragFile) => Record<string, unknown>;
   getDropProps?: (target: DropTarget) => Record<string, unknown>;
   pendingKeys?: Set<string>;
+  onContextMenu?: (e: React.MouseEvent, entry: RemoteEntry) => void;
 };
 
 function formatSize(bytes: number): string {
@@ -28,6 +29,7 @@ export default function VirtualFileList({
   getDragProps,
   getDropProps,
   pendingKeys,
+  onContextMenu,
 }: Props) {
   const ROW_HEIGHT = 40;
 
@@ -51,6 +53,7 @@ export default function VirtualFileList({
           ${entry.IsDir ? "cursor-pointer hover:bg-white/5" : ""}
           ${isPending ? "animate-pulse bg-yellow-900/20" : ""}`}
         onClick={() => onNavigate(entry)}
+        onContextMenu={(e) => { if (onContextMenu) { e.preventDefault(); e.stopPropagation(); onContextMenu(e, entry); } }}
         {...dragProps}
         {...dropProps}
       >
