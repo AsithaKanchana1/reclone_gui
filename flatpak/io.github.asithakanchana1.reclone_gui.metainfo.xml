@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>com.asithakanchana.reclone-gui</id>
+  <id>io.github.asithakanchana1.reclone_gui</id>
   <name>Reclone GUI</name>
   <summary>A cross-platform GUI for rclone cloud storage management</summary>
   <metadata_license>MIT</metadata_license>
@@ -25,7 +25,7 @@
       <li>Context menu for quick actions (new folder, delete, copy/move/sync to)</li>
     </ul>
   </description>
-  <launchable type="desktop-id">com.asithakanchana.reclone-gui.desktop</launchable>
+  <launchable type="desktop-id">io.github.asithakanchana1.reclone_gui.desktop</launchable>
   <url type="homepage">https://github.com/AsithaKanchana1/reclone_gui</url>
   <url type="bugtracker">https://github.com/AsithaKanchana1/reclone_gui/issues</url>
   <url type="vcs-browser">https://github.com/AsithaKanchana1/reclone_gui</url>

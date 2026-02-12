@@ -2,7 +2,7 @@
 Name=Reclone GUI
 Comment=A cross-platform GUI for rclone cloud storage management
 Exec=reclone-gui
-Icon=com.asithakanchana.reclone-gui
+Icon=io.github.asithakanchana1.reclone_gui
 Terminal=false
 Type=Application
 Categories=Utility;FileManager;Network;

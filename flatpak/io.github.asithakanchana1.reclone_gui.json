@@ -1,7 +1,7 @@
 {
-  "app-id": "com.asithakanchana.reclone-gui",
+  "app-id": "io.github.asithakanchana1.reclone_gui",
   "runtime": "org.gnome.Platform",
-  "runtime-version": "46",
+  "runtime-version": "47",
   "sdk": "org.gnome.Sdk",
   "sdk-extensions": [
     "org.freedesktop.Sdk.Extension.node20",
@@ -38,7 +38,7 @@
         {
           "type": "archive",
           "url": "https://github.com/rclone/rclone/releases/download/v1.68.2/rclone-v1.68.2-linux-amd64.zip",
-          "sha256": "REPLACE_WITH_ACTUAL_SHA256",
+          "sha256": "405e3b0a72bb3f069adaaa4fc11c8c86b145f1dc78baa9289ab9cc18ea3e94c8",
           "strip-components": 1
         }
       ]
@@ -51,15 +51,18 @@
         "npm run build",
         "cd src-tauri && cargo build --release",
         "install -Dm755 src-tauri/target/release/reclone-gui /app/bin/reclone-gui",
-        "install -Dm644 flatpak/com.asithakanchana.reclone-gui.desktop /app/share/applications/com.asithakanchana.reclone-gui.desktop",
-        "install -Dm644 src-tauri/icons/128x128.png /app/share/icons/hicolor/128x128/apps/com.asithakanchana.reclone-gui.png",
-        "install -Dm644 flatpak/com.asithakanchana.reclone-gui.metainfo.xml /app/share/metainfo/com.asithakanchana.reclone-gui.metainfo.xml"
+        "install -Dm644 flatpak/io.github.asithakanchana1.reclone_gui.desktop /app/share/applications/io.github.asithakanchana1.reclone_gui.desktop",
+        "install -Dm644 src-tauri/icons/128x128.png /app/share/icons/hicolor/128x128/apps/io.github.asithakanchana1.reclone_gui.png",
+        "install -Dm644 src-tauri/icons/32x32.png /app/share/icons/hicolor/32x32/apps/io.github.asithakanchana1.reclone_gui.png",
+        "install -Dm644 flatpak/io.github.asithakanchana1.reclone_gui.metainfo.xml /app/share/metainfo/io.github.asithakanchana1.reclone_gui.metainfo.xml"
       ],
       "sources": [
         {
-          "type": "dir",
-          "path": "."
-        }
+          "type": "git",
+          "url": "https://github.com/AsithaKanchana1/reclone_gui.git",
+          "tag": "v0.2.0"
+        },
+        "generated-sources.json"
       ]
     }
   ]
